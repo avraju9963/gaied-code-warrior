@@ -2,6 +2,8 @@ Architecture Diagram
 
 (A simple high-level overview of the flow)
 
+
+
 ┌──────────────┐          ┌─────────────────┐
 │   User/API   │  ---->   │  FastAPI Server │
 └──────────────┘          └─────────────────┘
