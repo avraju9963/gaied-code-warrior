@@ -21,18 +21,15 @@ graph TD;
     D -->|Attachments Exist| E[Process Attachments];
     D -->|No Attachments| F[Summarization Module];
 
-    E --> G[Extract Text from PDFs, Images (OCR), DOCX, JSON, XML];
-    G --> F;
+    E --> G[Extract Text from PDFs or Images (OCR)];
+    G --> H[Extract Text from DOCX, JSON, XML];
+    H --> F;
     
-    F[AI Summarization Module] --> H[Generate Summary];
+    F[AI Summarization Module] --> I[Generate Summary];
     
-    H --> I{Forward Email?};
-    I -->|Yes| J[Forward to External API];
-    I -->|No| K[Store in Database];
+    I --> J{Forward Email?};
+    J -->|Yes| K[Forward to External API];
+    J -->|No| L[Store in Database];
 
-    J --> L[End: Email Forwarded];
-    K --> L[End: Email Stored];
-
-
-
-
+    K --> M[End: Email Forwarded];
+    L --> M[End: Email Stored];
