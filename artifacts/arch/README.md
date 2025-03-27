@@ -10,6 +10,7 @@ graph TD;
     E -->|Summarized Data| F[Forwarding Service];
     F -->|Send Data to API| G[External System];
 
-![Uploading image.png…]()
+![image](https://github.com/user-attachments/assets/c97117bb-2116-46f8-9be1-978f9f9a386d)
+
 
 
