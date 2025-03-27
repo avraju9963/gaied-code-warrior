@@ -1,0 +1,108 @@
+import os
+import pytest
+from fastapi.testclient import TestClient
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+import json
+import io
+from unittest.mock import patch, MagicMock
+from email_parser_ai import app, parse_email, summarize_text
+
+client = TestClient(app)
+
+# Sample email creation function
+def create_sample_email():
+    msg = MIMEMultipart()
+    msg["From"] = "sender@example.com"
+    msg["To"] = "receiver@example.com"
+    msg["Subject"] = "Test Email"
+    
+    # Adding text body
+    text_part = MIMEText("This is a test email body.", "plain")
+    msg.attach(text_part)
+
+    # Adding JSON attachment
+    json_data = json.dumps({"message": "This is a test JSON file."})
+    json_part = MIMEApplication(json_data, Name="test.json")
+    json_part["Content-Disposition"] = 'attachment; filename="test.json"'
+    msg.attach(json_part)
+
+    return msg
+
+# Helper function to save email to file
+def save_email_to_file(email_message, filename="test_email.eml"):
+    with open(filename, "w") as f:
+        f.write(email_message.as_string())
+
+# Mock AI summarizer
+@pytest.fixture
+def mock_summarizer():
+    with patch("email_parser_ai.summarizer") as mock:
+        mock.return_value = [{"summary_text": "This is a test summary."}]
+        yield mock
+
+# ✅ Test Email Parsing API
+def test_parse_email_api(mock_summarizer):
+    msg = create_sample_email()
+    file_path = "test_email.eml"
+    save_email_to_file(msg, file_path)
+
+    with open(file_path, "rb") as f:
+        files = {"file": ("test_email.eml", f, "message/rfc822")}
+        response = client.post("/parse-email/", files=files)
+
+    os.remove(file_path)  # Clean up the test file
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["from"] == "sender@example.com"
+    assert data["to"] == "receiver@example.com"
+    assert data["subject"] == "Test Email"
+    assert "summary" in data
+    assert data["summary"] == "This is a test summary."
+    assert len(data["attachments"]) == 1
+    assert data["attachments"][0]["file_name"] == "test.json"
+
+# ✅ Test Summarization Function
+def test_summarize_text(mock_summarizer):
+    text = "This is a long email content that needs to be summarized."
+    summary = summarize_text(text)
+    assert summary == "This is a test summary."
+
+# ✅ Test Forwarding Email (Mocking HTTP Request)
+@patch("email_parser_ai.requests.post")
+def test_forward_email(mock_post):
+    mock_post.return_value.status_code = 200
+    email_data = {
+        "from": "sender@example.com",
+        "to": "receiver@example.com",
+        "subject": "Test",
+        "body": "Email content",
+        "summary": "Short summary",
+        "attachments": []
+    }
+    from email_parser_ai import forward_email
+    response = forward_email(email_data)
+    assert response == 200
+    mock_post.assert_called_once()
+
+# ✅ Test Processing Attachments
+@patch("email_parser_ai.extract_text_from_pdf")
+def test_process_attachments(mock_pdf_extractor):
+    from email_parser_ai import process_attachments
+    mock_pdf_extractor.return_value = "Extracted text from PDF"
+
+    msg = MIMEMultipart()
+    pdf_data = b"%PDF-1.4 Sample PDF Content"
+    pdf_part = MIMEApplication(pdf_data, Name="sample.pdf")
+    pdf_part["Content-Disposition"] = 'attachment; filename="sample.pdf"'
+    msg.attach(pdf_part)
+
+    attachments = process_attachments(msg)
+    assert len(attachments) == 1
+    assert attachments[0]["file_name"] == "sample.pdf"
+    assert attachments[0]["content"] == "Extracted text from PDF"
+
+if __name__ == "__main__":
+    pytest.main()
