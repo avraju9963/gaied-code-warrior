@@ -1,3 +1,28 @@
-Replace this file with a document that describes the architecture and design of your solution architecture. This may include
-    - An architecture drawing exported into a png/jpeg format image
-    - A document in pdf or md format that describes your solution
+Architecture Diagram
+
+(A simple high-level overview of the flow)
+
+┌──────────────┐          ┌─────────────────┐
+│   User/API   │  ---->   │  FastAPI Server │
+└──────────────┘          └─────────────────┘
+                                 │
+                                 ▼
+                     ┌────────────────────┐
+                     │   Email Parser     │
+                     └────────────────────┘
+                                 │
+                                 ▼
+             ┌─────────────────────────────┐
+             │  AI-Based Summarization (NLP) │
+             └─────────────────────────────┘
+                                 │
+                                 ▼
+          ┌────────────────────────────┐
+          │  Attachment Processing      │
+          │ (PDF, Images, DOCX, JSON)   │
+          └────────────────────────────┘
+                                 │
+                                 ▼
+               ┌────────────────────────────┐
+               │  Forward to External API   │
+               └────────────────────────────┘
