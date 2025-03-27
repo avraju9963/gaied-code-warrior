@@ -10,3 +10,6 @@ graph TD;
     E -->|Summarized Data| F[Forwarding Service];
     F -->|Send Data to API| G[External System];
 
+![Uploading image.png…]()
+
+
